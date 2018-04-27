@@ -7,7 +7,7 @@ services:
   ################
   postgrest-db:
     container_name: postgrest-db
-    image: postgres:10.3-alpine
+    image: postgres:9.6.6-alpine
     ports:
       - "5432:5432"
     environment:
@@ -20,8 +20,6 @@ services:
       # anything in initdb directory is created in the database
       # see "How to extend this image" section at https://hub.docker.com/r/_/postgres/
       - "./initdb:/docker-entrypoint-initdb.d"
-    # networks:
-    #   - postgrest-backend
     restart: always
 
   #############
@@ -31,7 +29,7 @@ services:
     container_name: postgrest
     image: postgrest/postgrest:v0.4.4.0
     ports:
-      - "80:3000"
+      - "5000:3000"
     environment:
       # The standard connection URI format, documented at
       # https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -41,9 +39,8 @@ services:
       # The database role to use when no client authentication is provideds
       - PGRST_DB_ANON_ROLE=${DB_ANON_ROLE}
       # Sets the Swagger.host parameter. Must be a valid URI.
-      - PGRST_SERVER_PROXY_URI=${DOCKER_MACHINE_ROOT}
-    # networks:
-    #   - postgrest-backend
+      - PGRST_SERVER_PROXY_URI=${API_HOST}
+      - PGRST_SERVER_PORT=5000
     restart: always
 
   ##############
@@ -51,13 +48,20 @@ services:
   ##############
   swagger-ui:
     container_name: swagger-ui
-    image: swaggerapi/swagger-ui:v3.13.2
+    image: swaggerapi/swagger-ui:latest
     ports:
       - "8080:8080"
     environment:
-      - API_URL=${DOCKER_MACHINE_ROOT}
+      - API_URL=${API_HOST}
     restart: always
 
-networks:
-  postgrest-backend:
-    driver: bridge
+  nginx:
+    build: ./nginx
+    depends_on:
+      - postgrest
+      - swagger-ui
+    links:
+      - postgrest
+      - swagger-ui
+    ports:
+      - "0.0.0.0:80:80"
