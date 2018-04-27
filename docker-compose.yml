@@ -20,21 +20,8 @@ services:
       # anything in initdb directory is created in the database
       # see "How to extend this image" section at https://hub.docker.com/r/_/postgres/
       - "./initdb:/docker-entrypoint-initdb.d"
-    networks:
-      - postgrest-backend
-    restart: always
-
-  ##################
-  # postgrest-demo #
-  ##################
-  postgrest-demo:
-    container_name: postgrest-demo
-    image: nginx:1.13.10-alpine
-    ports:
-      - "80:80"
-    volumes:
-      # anything in html directory is hosted via nginx
-      - "./html:/usr/share/nginx/html"
+    # networks:
+    #   - postgrest-backend
     restart: always
 
   #############
@@ -44,7 +31,7 @@ services:
     container_name: postgrest
     image: postgrest/postgrest:v0.4.4.0
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
       # The standard connection URI format, documented at
       # https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -53,8 +40,10 @@ services:
       - PGRST_DB_SCHEMA=${DB_SCHEMA}
       # The database role to use when no client authentication is provideds
       - PGRST_DB_ANON_ROLE=${DB_ANON_ROLE}
-    networks:
-      - postgrest-backend
+      # Sets the Swagger.host parameter. Must be a valid URI.
+      - PGRST_SERVER_PROXY_URI=${DOCKER_MACHINE_ROOT}
+    # networks:
+    #   - postgrest-backend
     restart: always
 
   ##############
@@ -66,7 +55,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - API_URL=http://localhost:3000/
+      - API_URL=${DOCKER_MACHINE_ROOT}
     restart: always
 
 networks:
