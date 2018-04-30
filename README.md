@@ -1,41 +1,62 @@
-compose-postgrest
-=================
+# compose-postgrest
+Forked from [compose-postgrest](https://github.com/mattddowney/compose-postgrest), adding docker-machine and NGINX.
 
-[Postgres](https://www.postgresql.org/), [PostgREST](https://github.com/begriffs/postgrest), and [Swagger UI](https://github.com/swagger-api/swagger-ui) conveniently wrapped up with docker-compose.
+## Stack
+* [NGINX](https://github.com/nginxinc/docker-nginx): Webserver.
+* [Postgres](https://www.postgresql.org/): Database Engine.
+* [PostgREST](https://github.com/begriffs/postgrest): API Server.
+* [Swagger UI](https://github.com/swagger-api/swagger-ui): API Spec Exploration & Test Interface.
+* [docker-compose](https://github.com/docker/compose)/[Docker](https://github.com/docker): Containerization.
+* [docker-machine](https://docs.docker.com/machine/): Virtual Machine for local development.
+* [docker-machine-ipconfig](https://github.com/fivestars/docker-machine-ipconfig): Enables static IP addresses for docker-machine VMs.
 
-Place SQL into the `initdb` folder, get REST! 
-Includes [world sample database](http://pgfoundry.org/projects/dbsamples/).
+## Local Development Installation Instructions
+**NOTE:** Before you start, you'll need the following installed on your local machine: 
+1. Docker
+2. docker-compose
+3. docker-machine
+4. docker-machine-ipconfig
 
-Contains a simple front-end  demo application.
+The quickest/easiest way to get the first three is by installing [Docker Toolbox](https://docs.docker.com/docker-for-mac/docker-toolbox/). For `docker-machine-ipconfig` see [its associated repo](https://github.com/fivestars/docker-machine-ipconfig).
 
-Usage
------
+Start by cloning this repo to your local machine:
 
-**Start the containers**
+```bash
+$ git clone git@github.com:respondcreate/compose-postgrest.git
+```
 
-`docker-compose up -d`
+Next, create a docker-machine instance to run this project within:
 
-**Tearing down the containers**
+```bash
+$ docker-machine create -d virtualbox compose-postgrest
+```
 
-`docker-compose down --remove-orphans -v`
+Now, assign a static IP address (`192.168.99.116`) to the instance you just created:
 
-**Demo Application**
+```bash
+$ docker-machine-ipconfig static compose-postgrest 192.168.99.116
+```
 
-Located at [http://localhost](http://localhost)
+Next, add this VM's environment variables to your current shell session:
 
-**Postgrest**
+```bash
+$ eval "$(docker-machine env compose-postgrest)"
+```
 
-Located at [http://localhost:3000](http://localhost:3000)
+Finally, build the docker-compose pod:
 
-Try things like:
-* [http://localhost:3000/city](http://localhost:3000/test)
-* [http://localhost:3000/country](http://localhost:3000/country)
-* [http://localhost:3000/countrylanguage](http://localhost:3000/countrylanguage)
-* [http://localhost:3000/city?name=eq.Denver](http://localhost:3000/city?name=eq.Denver)
-* [http://localhost:3000/city?population=gte.5000000](http://localhost:3000/city?population=gte.5000000)
-* [http://localhost:3000/city?district=like.*Island](http://localhost:3000/city?district=like.*Island)
-* [http://localhost:3000/city?district=like.*Island&population=lt.1000&select=id,name](http://localhost:3000/city?district=like.*Island&population=lt.1000&select=id,name)
+```bash
+$ docker-compose up -d --build
+```
 
-**Swagger UI**
+Once that completes visit [http://192.168.99.116/swagger](http://192.168.99.116/swagger) in your browser!
 
-Located at [http://localhost:8080](http://localhost:8080)
+### Other helpful commands
+Spinning down your docker-compose pod:
+
+```bash
+$ docker-compose down
+```
+
+## Adding Additional SQL
+Out of the box, this project provides the [world sample database](http://pgfoundry.org/projects/dbsamples/). To add additional SQL just include it in the `initdb` folder.
